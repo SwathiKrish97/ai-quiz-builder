@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pkl
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Environment files
+.env
+.env.*
+
+# Local results / logs
+results.json
+*.log
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
