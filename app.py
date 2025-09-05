@@ -18,11 +18,11 @@ takes a topic,
 
 - lets the user answer and submit,
 
-- (bonus) shows the score + correct answers + explanations,
+- shows the score + correct answers + explanations,
 
-- (bonus) uses Wikipedia to improve factual accuracy,
+- uses Wikipedia to improve factual accuracy,
 
-- (bonus) persists results to a JSON file and supports review.
+- persists results to a JSON file and supports review.
 """
 
 
