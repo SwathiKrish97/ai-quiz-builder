@@ -244,17 +244,28 @@ def show_history():
         lines.append(f"- **{r.get('timestamp','')}** — Topic: **{r.get('topic','')}**, Score: **{score_str}**")
     return "\n".join(lines)
 
+
 # -----------------------------
-# Gradio UI
+# Gradio UI (updated)
 # -----------------------------
 with gr.Blocks(title="AI Quiz Builder") as demo:
     gr.Markdown("## AI-Powered Knowledge Quiz Builder")
 
+    # Inputs
     topic = gr.Textbox(label="Topic", placeholder="e.g., Photosynthesis")
     use_retrieval = gr.Checkbox(value=True, label="Use Wikipedia grounding")
     generate_btn = gr.Button("Generate Quiz")
 
-    radios = [gr.Radio(choices=[], label=f"Q{i+1}", visible=False) for i in range(5)]
+    # Show Q1–Q5 placeholders immediately; enable after generation
+    radios = [
+        gr.Radio(
+            choices=[],
+            label=f"Q{i+1}",
+            interactive=False,   # disabled until quiz loads
+            visible=True
+        )
+        for i in range(5)
+    ]
 
     submit_btn = gr.Button("Submit Answers")
     result = gr.Markdown()
@@ -262,40 +273,61 @@ with gr.Blocks(title="AI Quiz Builder") as demo:
     review_btn = gr.Button("Review Past Results")
     history_md = gr.Markdown()
 
+    # Holds current quiz JSON (questions/options/correct_index/etc.)
     state_quiz = gr.State(None)
 
+    # ----- Generate callback -----
     def on_generate(t, retrieve):
         try:
             quiz = generate_quiz(t, use_retrieval=retrieve)
+
+            # Fill each radio with options (A–D), enable interaction
             radio_updates = [
                 gr.update(
                     choices=[f"{chr(65+j)}. {opt}" for j, opt in enumerate(q["options"])],
                     value=None,
-                    visible=True,
                     label=f"Q{i+1}. {q['question']}",
+                    interactive=True,
+                    visible=True
                 )
                 for i, q in enumerate(quiz["questions"])
             ]
             return [quiz, *radio_updates]
+
         except Exception as e:
-            # Hide radios on failure
-            radio_updates = [gr.update(choices=[], value=None, visible=False) for _ in range(5)]
+            # Keep radios visible, but show a friendly error message
+            radio_updates = [
+                gr.update(
+                    choices=[f"Generation failed: {e}"],
+                    value=None,
+                    label=f"Q{i+1}",
+                    interactive=False,
+                    visible=True
+                )
+                for i in range(5)
+            ]
             return [None, *radio_updates]
 
+    # ----- Submit callback (scores + persistence) -----
     def on_submit(topic_text, quiz_state, *answers):
         if not quiz_state:
             return "Generate a quiz first."
 
-        # Strip "A. ", "B. " prefix before lookup
-        cleaned_answers = [a.split(". ", 1)[1] if isinstance(a, str) and ". " in a else a for a in answers]
+        # Strip "A. ", "B. " prefixes before lookup
+        cleaned_answers = [
+            a.split(". ", 1)[1] if isinstance(a, str) and ". " in a else a
+            for a in answers
+        ]
 
         score = 0
         lines = []
+
         for i, (q, ans) in enumerate(zip(quiz_state["questions"], cleaned_answers), start=1):
             sel = q["options"].index(ans) if isinstance(ans, str) and ans in q["options"] else None
             ci = q["correct_index"]
             ok = (sel == ci)
             score += 1 if ok else 0
+
             lines.append(
                 f"**Q{i}. {q['question']}**\n"
                 f"- Your answer: {ans if ans else '—'}\n"
@@ -303,6 +335,7 @@ with gr.Blocks(title="AI Quiz Builder") as demo:
                 + (f"- Why: {q.get('explanation','')}\n" if q.get('explanation') else "")
             )
 
+        # Persist this attempt (safe-guarded in caller)
         try:
             save_results(topic_text, score, cleaned_answers, quiz_state)
         except Exception as e:
@@ -310,9 +343,25 @@ with gr.Blocks(title="AI Quiz Builder") as demo:
 
         return f"### Score: **{score}/5**\n\n" + "\n".join(lines)
 
-    generate_btn.click(fn=on_generate, inputs=[topic, use_retrieval], outputs=[state_quiz, *radios])
-    submit_btn.click(fn=on_submit, inputs=[topic, state_quiz, *radios], outputs=[result])
-    review_btn.click(fn=show_history, inputs=[], outputs=history_md)
+    # ----- Wire buttons -----
+    generate_btn.click(
+        fn=on_generate,
+        inputs=[topic, use_retrieval],
+        outputs=[state_quiz, *radios],
+        show_progress=True,   # shows 'processing | …s' badge
+    )
+
+    submit_btn.click(
+        fn=on_submit,
+        inputs=[topic, state_quiz, *radios],
+        outputs=[result],
+    )
+
+    review_btn.click(
+        fn=show_history,   # make sure show_history returns "\n\n".join(...) for row spacing
+        inputs=[],
+        outputs=history_md,
+    )
 
 if __name__ == "__main__":
     # For local terminal runs; set share=True if you want a public URL
