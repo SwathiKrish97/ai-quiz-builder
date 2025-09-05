@@ -144,8 +144,11 @@ User ──> Gradio UI ──> Prompt Builder ──> OpenAI GPT
 
 ---
 
-## Demo Video  
-[▶️ Click to watch the demo](https://github.com/SwathiKrish97/ai-quiz-builder/blob/main/ai-quiz-builder-demo.mp4)
+## Demo Video
+
+<video src="https://raw.githubusercontent.com/SwathiKrish97/ai-quiz-builder/main/ai-quiz-builder-demo.mp4" controls>
+  Your browser does not support the video tag.
+</video>
 
 ---
 
