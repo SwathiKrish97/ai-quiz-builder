@@ -144,6 +144,11 @@ User ──> Gradio UI ──> Prompt Builder ──> OpenAI GPT
 
 ---
 
+## Demo Video  
+[▶️ Click to watch the demo](https://github.com/SwathiKrish97/ai-quiz-builder/blob/main/ai-quiz-builder-demo.mp4)
+
+---
+
 ## Author
 **Swathi Ramesh**  
 AI-Powered Quiz Builder
