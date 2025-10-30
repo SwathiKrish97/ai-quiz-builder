@@ -1,7 +1,6 @@
 # AI-Powered Knowledge Quiz Builder
 
 This is a simple MVP web application that generates multiple-choice quizzes from any user-provided topic using an AI model.  
-It was built as part of a technical interview challenge.
 
 ---
 
